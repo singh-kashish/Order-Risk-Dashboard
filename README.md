@@ -1,119 +1,167 @@
-# Shadcn Admin Dashboard
+# 📊 Order Risk Dashboard
 
-Admin Dashboard UI crafted with Shadcn and Vite. Built with responsiveness and accessibility in mind.
+A modern, production-ready responsive dashboard to analyze customer order risk using **React, TanStack Table, TanStack Router, and React Query**.
 
-![alt text](public/images/shadcn-admin.png)
+---
 
-[![Sponsored by Clerk](https://img.shields.io/badge/Sponsored%20by-Clerk-5b6ee1?logo=clerk)](https://go.clerk.com/GttUAaK)
+## 🚀 Features
 
-I've been creating dashboard UIs at work and for my personal projects. I always wanted to make a reusable collection of dashboard UI for future projects; and here it is now. While I've created a few custom components, some of the code is directly adapted from ShadcnUI examples.
+### 📦 Data Layer
 
-> This is not a starter project (template) though. I'll probably make one in the future.
+* Fetch orders using **React Query**
+* Data transformation via `transformOrders`
+* Optimistic updates for instant UI feedback
 
-## Features
+---
 
-- Light/dark mode
-- Responsive
-- Accessible
-- With built-in Sidebar component
-- Global search command
-- 10+ pages
-- Extra custom components
-- RTL support
+### 📊 Risk Calculation
 
-<details>
-<summary>Customized Components (click to expand)</summary>
+Risk score is calculated using:
 
-This project uses Shadcn UI components, but some have been slightly modified for better RTL (Right-to-Left) support and other improvements. These customized components differ from the original Shadcn UI versions.
-
-If you want to update components using the Shadcn CLI (e.g., `npx shadcn@latest add <component>`), it's generally safe for non-customized components. For the listed customized ones, you may need to manually merge changes to preserve the project's modifications and avoid overwriting RTL support or other updates.
-
-> If you don't require RTL support, you can safely update the 'RTL Updated Components' via the Shadcn CLI, as these changes are primarily for RTL compatibility. The 'Modified Components' may have other customizations to consider.
-
-### Modified Components
-
-- scroll-area
-- sonner
-- separator
-
-### RTL Updated Components
-
-- alert-dialog
-- calendar
-- command
-- dialog
-- dropdown-menu
-- select
-- table
-- sheet
-- sidebar
-- switch
-
-**Notes:**
-
-- **Modified Components**: These have general updates, potentially including RTL adjustments.
-- **RTL Updated Components**: These have specific changes for RTL language support (e.g., layout, positioning).
-- For implementation details, check the source files in `src/components/ui/`.
-- All other Shadcn UI components in the project are standard and can be safely updated via the CLI.
-
-</details>
-
-## Tech Stack
-
-**UI:** [ShadcnUI](https://ui.shadcn.com) (TailwindCSS + RadixUI)
-
-**Build Tool:** [Vite](https://vitejs.dev/)
-
-**Routing:** [TanStack Router](https://tanstack.com/router/latest)
-
-**Type Checking:** [TypeScript](https://www.typescriptlang.org/)
-
-**Linting/Formatting:** [ESLint](https://eslint.org/) & [Prettier](https://prettier.io/)
-
-**Icons:** [Lucide Icons](https://lucide.dev/icons/), [Tabler Icons](https://tabler.io/icons) (Brand icons only)
-
-**Auth (partial):** [Clerk](https://go.clerk.com/GttUAaK)
-
-## Run Locally
-
-Clone the project
-
-```bash
-  git clone https://github.com/satnaing/shadcn-admin.git
+```
+risk_score = (cod_orders / total_orders) * 100
 ```
 
-Go to the project directory
+### 🚦 Risk Levels
 
-```bash
-  cd shadcn-admin
+| Score   | Status         |
+| ------- | -------------- |
+| > 70    | 🔴 High Risk   |
+| 40 - 70 | 🟡 Medium Risk |
+| < 40    | 🟢 Safe        |
+
+---
+
+### 🧩 UI Features
+
+* Sortable & paginated table (TanStack Table)
+* Global search + filters (city, risk)
+* URL-based filters (shareable links)
+* Reset filters (fully synced UI)
+* Empty states & loading skeletons
+* Order details drawer
+* Status badges with colors
+
+---
+
+### ⚡ Performance
+
+* Memoized filtering
+* Optimistic UI updates
+* Server-state caching (React Query)
+
+---
+
+## 🛠 Tech Stack
+
+* React + TypeScript
+* TanStack Table
+* TanStack Router
+* React Query
+* Tailwind CSS
+* ShadCN UI
+
+---
+
+## 📂 Project Structure
+
+```
+src/features/order-risk
+ ├── components/
+ │    ├── OrdersTable.tsx
+ │    ├── OrderDetailsDrawer.tsx
+ │    ├── SummaryCards.tsx
+ │    └── EmptyState.tsx
+ │    ├── OrdersTableSkeleton.tsx
+ │    ├── RiskDistributionChart.tsx
+ │    ├── SummaryCards.tsx
+ │    ├── SummarySkeleton.tsx
+ │
+ ├── hooks/
+ │    ├── useOrders.ts
+ │    └── useUpdateOrder.ts
+ │
+ ├── utils/
+ │    ├── transform.ts
+ │    └── risk.ts
+ │
+ ├── routes/_authenticated/
+ │    └── order-risk
+ │        └── index.tsx
+ │
+ └── types/
+      └── order.ts
 ```
 
-Install dependencies
+---
 
-```bash
-  pnpm install
+## ⚙️ Setup Instructions
+```
+npm install
+npm run dev
+```
+---
+
+## 🔗 URL Filters Example
+
+```
+/order-risk?city=Mumbai&risk=High%20Risk
 ```
 
-Start the server
+✔ Filters auto-applied on load
+✔ Fully shareable state
 
-```bash
-  pnpm run dev
-```
+---
 
-## Sponsoring this project ❤️
+## 🧠 Key Engineering Decisions
 
-If you find this project helpful or use this in your own work, consider [sponsoring me](https://github.com/sponsors/satnaing) to support development and maintenance. You can [buy me a coffee](https://buymeacoffee.com/satnaing) as well. Don’t worry, every penny helps. Thank you! 🙏
+### Why React Query?
 
-For questions or sponsorship inquiries, feel free to reach out at [satnaingdev@gmail.com](mailto:satnaingdev@gmail.com).
+* Handles caching, retries, and background updates
+* Simplifies async state management
 
-### Current Sponsor
+---
 
-- [Clerk](https://go.clerk.com/GttUAaK) - authentication and user management for the modern web
+### Why TanStack Table?
 
-## Author
+* Headless + highly customizable
+* Supports sorting, filtering, pagination
 
-Crafted with 🤍 by [@satnaing](https://github.com/satnaing)
+---
 
-## License
+### Why URL-based filters?
 
-Licensed under the [MIT License](https://choosealicense.com/licenses/mit/)
+* Shareable dashboard state
+* Better UX for real-world apps
+
+---
+
+### Why optimistic updates?
+
+* Instant UI response
+* Better perceived performance
+
+---
+
+## ✨ Future Improvements
+
+* Server-side pagination
+* Debounced search
+* Role-based access
+* Charts (Recharts)
+* Export to CSV
+
+---
+
+## 📸 Screenshots
+<img width="2936" height="1652" alt="image" src="https://github.com/user-attachments/assets/fe1f7d7c-0d25-4ff2-a709-0c0384425d28" />
+
+<img width="2910" height="1650" alt="image" src="https://github.com/user-attachments/assets/b298a8d1-7f35-40e5-8082-c8f91c23b139" />
+
+
+
+---
+
+## 🧑‍💻 Author
+
+Kashish Singh
