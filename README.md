@@ -16,19 +16,17 @@ A modern, production-ready responsive dashboard to analyze customer order risk u
 
 ### 📊 Risk Calculation
 
-Risk score is calculated using:
-
 ```
 risk_score = (cod_orders / total_orders) * 100
 ```
 
 ### 🚦 Risk Levels
 
-| Score   | Status         |
-| ------- | -------------- |
-| > 70    | 🔴 High Risk   |
-| 40 - 70 | 🟡 Medium Risk |
-| < 40    | 🟢 Safe        |
+| Score | Status         |
+| ----- | -------------- |
+| > 70  | 🔴 High Risk   |
+| 40–70 | 🟡 Medium Risk |
+| < 40  | 🟢 Safe        |
 
 ---
 
@@ -40,15 +38,51 @@ risk_score = (cod_orders / total_orders) * 100
 * Reset filters (fully synced UI)
 * Empty states & loading skeletons
 * Order details drawer
-* Status badges with colors
+* Status badges with visual indicators
 
 ---
 
 ### ⚡ Performance
 
-* Memoized filtering
+* Memoized filtering (`useMemo`)
 * Optimistic UI updates
 * Server-state caching (React Query)
+
+---
+
+## 🏗️ Architecture Overview
+
+The application follows a **feature-based modular architecture**:
+
+* **Components Layer**
+
+  * Reusable UI components (table, cards, drawer)
+* **Hooks Layer**
+
+  * Encapsulates data fetching & mutations (`useOrders`, `useUpdateOrder`)
+* **Utils Layer**
+
+  * Business logic (risk calculation, data transformation)
+* **Routing Layer**
+
+  * File-based routing using TanStack Router with typed search params
+* **State Management**
+
+  * Server state → React Query
+  * UI state → React (useState, useMemo)
+
+### Data Flow
+
+```
+API → React Query → transformOrders → UI Components
+```
+
+### Key Design Principles
+
+* Separation of concerns
+* Reusable components
+* Type safety across layers
+* Minimal prop drilling
 
 ---
 
@@ -71,10 +105,9 @@ src/features/order-risk
  │    ├── OrdersTable.tsx
  │    ├── OrderDetailsDrawer.tsx
  │    ├── SummaryCards.tsx
- │    └── EmptyState.tsx
+ │    ├── EmptyState.tsx
  │    ├── OrdersTableSkeleton.tsx
  │    ├── RiskDistributionChart.tsx
- │    ├── SummaryCards.tsx
  │    ├── SummarySkeleton.tsx
  │
  ├── hooks/
@@ -86,7 +119,7 @@ src/features/order-risk
  │    └── risk.ts
  │
  ├── routes/_authenticated/
- │    └── order-risk
+ │    └── order-risk/
  │        └── index.tsx
  │
  └── types/
@@ -96,10 +129,21 @@ src/features/order-risk
 ---
 
 ## ⚙️ Setup Instructions
+
+### 1️⃣ Install dependencies
+
 ```
 npm install
+```
+
+### 2️⃣ Start development server
+
+```
 npm run dev
 ```
+
+> App runs at: http://localhost:5173
+
 ---
 
 ## 🔗 URL Filters Example
@@ -109,7 +153,30 @@ npm run dev
 ```
 
 ✔ Filters auto-applied on load
-✔ Fully shareable state
+✔ Shareable dashboard state
+
+---
+
+## 🧠 Assumptions Made
+
+* Order data includes:
+
+  * total orders
+  * COD orders
+* Risk is calculated **per customer**, not per individual order
+* Dataset size is moderate → client-side filtering is sufficient
+* Backend supports update operations (PUT/PATCH)
+* No authentication/authorization required for this scope
+
+---
+
+## 🧪 Edge Case Handling
+
+* Empty dataset → dedicated empty state
+* No filter results → contextual empty state
+* API latency → loading skeletons
+* Failed updates → rollback via React Query
+* Filter reset → UI + state synced correctly
 
 ---
 
@@ -117,48 +184,45 @@ npm run dev
 
 ### Why React Query?
 
-* Handles caching, retries, and background updates
-* Simplifies async state management
+* Handles caching, retries, background refetching
+* Separates server state from UI state
 
 ---
 
 ### Why TanStack Table?
 
-* Headless + highly customizable
-* Supports sorting, filtering, pagination
+* Headless architecture for full UI control
+* Built-in sorting, filtering, pagination
 
 ---
 
 ### Why URL-based filters?
 
-* Shareable dashboard state
-* Better UX for real-world apps
+* Enables shareable and persistent UI state
+* Improves UX for dashboards
 
 ---
 
 ### Why optimistic updates?
 
-* Instant UI response
-* Better perceived performance
+* Immediate UI feedback
+* Improves perceived performance
 
 ---
 
 ## ✨ Future Improvements
 
-* Server-side pagination
-* Debounced search
-* Role-based access
-* Charts (Recharts)
+* Server-side pagination & filtering
+* Debounced search input
+* Data visualization (charts)
 * Export to CSV
+* Role-based access control
 
 ---
 
 ## 📸 Screenshots
-<img width="2936" height="1652" alt="image" src="https://github.com/user-attachments/assets/fe1f7d7c-0d25-4ff2-a709-0c0384425d28" />
 
-<img width="2910" height="1650" alt="image" src="https://github.com/user-attachments/assets/b298a8d1-7f35-40e5-8082-c8f91c23b139" />
-
-
+<img width="2936" height="1652" alt="image" src="https://github.com/user-attachments/assets/fe1f7d7c-0d25-4ff2-a709-0c0384425d28" /> <img width="2910" height="1650" alt="image" src="https://github.com/user-attachments/assets/b298a8d1-7f35-40e5-8082-c8f91c23b139" />
 
 ---
 
