@@ -96,6 +96,11 @@ export const sidebarData: SidebarData = {
             },
           ],
         },
+        {
+          title: 'Order Risk Dashboard',
+          url: '/order-risk',
+          icon: LayoutDashboard,
+        },
       ],
     },
     {
