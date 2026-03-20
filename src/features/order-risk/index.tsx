@@ -11,15 +11,18 @@ import { useOrders } from './hooks/useOrders'
 import { SummaryCards } from './components/SummaryCards'
 import { OrdersTable } from './components/OrdersTable'
 import { RiskDistributionChart } from './components/RiskDistributionChart'
+import { SummarySkeleton } from './components/SummarySkeleton'
+import { OrdersTableSkeleton } from './components/OrdersTableSkeleton'
 
 export function OrderRiskPage() {
   const { data: orders = [], isLoading } = useOrders()
 
   if (isLoading) {
     return (
-      <Main>
-        <div className="p-6">Loading...</div>
-      </Main>
+      <div className="space-y-6">
+        <SummarySkeleton />
+        <OrdersTableSkeleton />
+      </div>
     )
   }
 
@@ -46,8 +49,8 @@ export function OrderRiskPage() {
             </p>
           </div>
 
-            <SummaryCards orders={orders} />
-            <OrdersTable orders={orders} />
+            <SummaryCards orders={orders || []} />
+            <OrdersTable orders={orders || []} />
             <RiskDistributionChart orders={orders} />
         </div>
       </Main>

@@ -14,5 +14,6 @@ export const useOrders = () => {
       return res.data
     },
     select: (data) => transformOrders(data),
+    placeholderData: (prev) => prev,
   })
 }

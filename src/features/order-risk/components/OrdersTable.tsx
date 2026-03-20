@@ -25,7 +25,11 @@ import type { SortingState } from '@tanstack/react-table'
 import type { Order } from '../types/order'
 
 import { OrderDetailsDrawer } from './OrderDetailsDrawer'
+import { EmptyState } from './EmptyState'
 import { toast } from 'sonner'
+
+import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useUpdateOrder } from '../hooks/useUpdateOrder'
 
 type Props = {
   orders: Order[]
@@ -34,22 +38,44 @@ type Props = {
 const columnHelper = createColumnHelper<Order>()
 
 export function OrdersTable({ orders }: Props) {
+  const navigate = useNavigate()
+  const search = useSearch({ from: '/_authenticated/order-risk/' })
+
+  const { mutate } = useUpdateOrder()
+
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
-  const [cityFilter, setCityFilter] = useState<string | undefined>()
-  const [riskFilter, setRiskFilter] = useState<string | undefined>()
+
+  // ✅ URL-based filters
+  const [cityFilter, setCityFilter] = useState<string | undefined>(
+    search.city
+  )
+  const [riskFilter, setRiskFilter] = useState<string | undefined>(
+    search.risk
+  )
+
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [open, setOpen] = useState(false)
 
-  // 🔥 FIX: force reset of Select UI
   const [resetKey, setResetKey] = useState(0)
 
-  // 🔥 LOCAL STATE
   const [tableData, setTableData] = useState<Order[]>(orders)
 
   useEffect(() => {
     setTableData(orders)
   }, [orders])
+
+  // ✅ Sync filters → URL
+  useEffect(() => {
+  navigate({
+    from: '/order-risk/', 
+    search: {
+      city: cityFilter || undefined,
+      risk: riskFilter || undefined,
+    },
+    replace: true,
+  })
+}, [cityFilter, riskFilter, navigate])
 
   const filteredData = useMemo(() => {
     return tableData.filter((o) => {
@@ -123,6 +149,32 @@ export function OrdersTable({ orders }: Props) {
 
   const cities = [...new Set(tableData.map((o) => o.city))]
 
+  // EMPTY STATE (no data)
+  if (!orders.length) {
+    return (
+      <EmptyState
+        title="No orders found"
+        description="There are no orders available."
+      />
+    )
+  }
+
+  // EMPTY STATE (after filters)
+  if (filteredData.length === 0) {
+    return (
+      <EmptyState
+        title="No matching results"
+        description="Try adjusting your filters."
+        action={() => {
+          setCityFilter(undefined)
+          setRiskFilter(undefined)
+          setGlobalFilter('')
+          setResetKey((prev) => prev + 1)
+        }}
+      />
+    )
+  }
+
   return (
     <div className="space-y-4">
       {/* Filters */}
@@ -134,13 +186,13 @@ export function OrdersTable({ orders }: Props) {
           className="max-w-sm"
         />
 
-        {/* City Filter */}
+        {/* City */}
         <Select
           key={`city-${resetKey}`}
           value={cityFilter}
           onValueChange={setCityFilter}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-45">
             <SelectValue placeholder="City" />
           </SelectTrigger>
           <SelectContent>
@@ -152,13 +204,13 @@ export function OrdersTable({ orders }: Props) {
           </SelectContent>
         </Select>
 
-        {/* Risk Filter */}
+        {/* Risk */}
         <Select
           key={`risk-${resetKey}`}
           value={riskFilter}
           onValueChange={setRiskFilter}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-45">
             <SelectValue placeholder="Risk Level" />
           </SelectTrigger>
           <SelectContent>
@@ -185,7 +237,7 @@ export function OrdersTable({ orders }: Props) {
 
       {/* Table */}
       <div className="rounded-md border overflow-x-auto">
-        <table className="min-w-[900px] w-full text-sm">
+        <table className="min-w-225 w-full text-sm">
           <thead className="bg-muted">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
@@ -254,9 +306,12 @@ export function OrdersTable({ orders }: Props) {
         open={open}
         onOpenChange={setOpen}
         onUpdateOrder={(updated) => {
+          // ✅ optimistic update
           setTableData((prev) =>
             prev.map((o) => (o.id === updated.id ? updated : o))
           )
+
+          mutate(updated)
         }}
       />
     </div>
