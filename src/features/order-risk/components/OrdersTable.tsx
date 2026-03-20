@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import type { SortingState } from '@tanstack/react-table'
 import type { Order } from '../types/order'
 
@@ -34,17 +34,25 @@ type Props = {
 const columnHelper = createColumnHelper<Order>()
 
 export function OrdersTable({ orders }: Props) {
-  // ================= STATE =================
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
-  const [cityFilter, setCityFilter] = useState('')
-  const [riskFilter, setRiskFilter] = useState('')
+  const [cityFilter, setCityFilter] = useState<string | undefined>()
+  const [riskFilter, setRiskFilter] = useState<string | undefined>()
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [open, setOpen] = useState(false)
 
-  // ================= FILTER DATA =================
+  // 🔥 FIX: force reset of Select UI
+  const [resetKey, setResetKey] = useState(0)
+
+  // 🔥 LOCAL STATE
+  const [tableData, setTableData] = useState<Order[]>(orders)
+
+  useEffect(() => {
+    setTableData(orders)
+  }, [orders])
+
   const filteredData = useMemo(() => {
-    return orders.filter((o) => {
+    return tableData.filter((o) => {
       return (
         (!cityFilter || o.city === cityFilter) &&
         (!riskFilter || o.riskLevel === riskFilter) &&
@@ -53,21 +61,12 @@ export function OrdersTable({ orders }: Props) {
           o.id.toLowerCase().includes(globalFilter.toLowerCase()))
       )
     })
-  }, [orders, cityFilter, riskFilter, globalFilter])
+  }, [tableData, cityFilter, riskFilter, globalFilter])
 
-  // ================= COLUMNS =================
   const columns = [
-    columnHelper.accessor('id', {
-      header: 'Order ID',
-    }),
-
-    columnHelper.accessor('customer', {
-      header: 'Customer',
-    }),
-
-    columnHelper.accessor('phone', {
-      header: 'Phone',
-    }),
+    columnHelper.accessor('id', { header: 'Order ID' }),
+    columnHelper.accessor('customer', { header: 'Customer' }),
+    columnHelper.accessor('phone', { header: 'Phone' }),
 
     columnHelper.accessor('city', {
       header: ({ column }) => (
@@ -99,7 +98,6 @@ export function OrdersTable({ orders }: Props) {
       header: 'Status',
       cell: ({ getValue }) => {
         const value = getValue()
-
         const variant =
           value === 'High Risk'
             ? 'destructive'
@@ -112,7 +110,6 @@ export function OrdersTable({ orders }: Props) {
     }),
   ]
 
-  // ================= TABLE =================
   const table = useReactTable({
     data: filteredData,
     columns,
@@ -124,13 +121,11 @@ export function OrdersTable({ orders }: Props) {
     getPaginationRowModel: getPaginationRowModel(),
   })
 
-  // ================= UNIQUE CITIES =================
-  const cities = [...new Set(orders.map((o) => o.city))]
+  const cities = [...new Set(tableData.map((o) => o.city))]
 
   return (
     <div className="space-y-4">
-
-      {/* ===== Filters ===== */}
+      {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
         <Input
           placeholder="Search orders..."
@@ -139,7 +134,12 @@ export function OrdersTable({ orders }: Props) {
           className="max-w-sm"
         />
 
-        <Select onValueChange={setCityFilter}>
+        {/* City Filter */}
+        <Select
+          key={`city-${resetKey}`}
+          value={cityFilter}
+          onValueChange={setCityFilter}
+        >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="City" />
           </SelectTrigger>
@@ -152,7 +152,12 @@ export function OrdersTable({ orders }: Props) {
           </SelectContent>
         </Select>
 
-        <Select onValueChange={setRiskFilter}>
+        {/* Risk Filter */}
+        <Select
+          key={`risk-${resetKey}`}
+          value={riskFilter}
+          onValueChange={setRiskFilter}
+        >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Risk Level" />
           </SelectTrigger>
@@ -163,12 +168,14 @@ export function OrdersTable({ orders }: Props) {
           </SelectContent>
         </Select>
 
+        {/* Reset */}
         <Button
           variant="outline"
           onClick={() => {
-            setCityFilter('')
-            setRiskFilter('')
+            setCityFilter(undefined)
+            setRiskFilter(undefined)
             setGlobalFilter('')
+            setResetKey((prev) => prev + 1)
             toast.success('Filters reset')
           }}
         >
@@ -176,9 +183,9 @@ export function OrdersTable({ orders }: Props) {
         </Button>
       </div>
 
-      {/* ===== TABLE (RESPONSIVE FIX) ===== */}
+      {/* Table */}
       <div className="rounded-md border overflow-x-auto">
-        <table className="min-w-225 w-full text-sm">
+        <table className="min-w-[900px] w-full text-sm">
           <thead className="bg-muted">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
@@ -195,41 +202,29 @@ export function OrdersTable({ orders }: Props) {
           </thead>
 
           <tbody>
-            {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
-                <tr
-                  key={row.id}
-                  onClick={() => {
-                    setSelectedOrder(row.original)
-                    setOpen(true)
-                  }}
-                  className="border-t hover:bg-muted/50 cursor-pointer"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="p-3 whitespace-nowrap">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan={columns.length}
-                  className="text-center p-6 text-muted-foreground"
-                >
-                  No results found
-                </td>
+            {table.getRowModel().rows.map((row) => (
+              <tr
+                key={row.id}
+                onClick={() => {
+                  setSelectedOrder(row.original)
+                  setOpen(true)
+                }}
+                className={`border-t hover:bg-muted/50 cursor-pointer ${
+                  selectedOrder?.id === row.original.id ? 'bg-muted' : ''
+                }`}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <td key={cell.id} className="p-3 whitespace-nowrap">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
               </tr>
-            )}
+            ))}
           </tbody>
         </table>
       </div>
 
-      {/* ===== PAGINATION ===== */}
+      {/* Pagination */}
       <div className="flex items-center justify-between">
         <Button
           variant="outline"
@@ -253,11 +248,16 @@ export function OrdersTable({ orders }: Props) {
         </Button>
       </div>
 
-      {/* ===== DRAWER ===== */}
+      {/* Drawer */}
       <OrderDetailsDrawer
         order={selectedOrder}
         open={open}
         onOpenChange={setOpen}
+        onUpdateOrder={(updated) => {
+          setTableData((prev) =>
+            prev.map((o) => (o.id === updated.id ? updated : o))
+          )
+        }}
       />
     </div>
   )
